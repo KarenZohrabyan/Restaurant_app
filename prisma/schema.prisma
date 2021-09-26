@@ -1,0 +1,95 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id Int @default(autoincrement()) @id
+  firstname String @db.VarChar(255)
+  lastname String @db.VarChar(255)
+  email String @db.VarChar(255) @unique
+  password String @db.VarChar(255)
+  token String @db.VarChar(255)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  reservations UserOrder[]
+}
+
+model UserOrder {
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [user_id], references: [id])
+  user_id Int
+  price Int
+  tableOrders TableUserOrder[]
+  mealOrders MealUserOrder[]
+}
+
+model TableUserOrder {
+  userOrder          UserOrder     @relation(fields: [userOrderId], references: [id])
+  userOrderId        Int
+  tableOrder         TableOrder     @relation(fields: [tableOrderId], references: [id])
+  tableOrderId       Int
+  @@id([userOrderId, tableOrderId])
+}
+
+model MealUserOrder {
+  userOrder          UserOrder     @relation(fields: [userOrderId], references: [id])
+  userOrderId        Int
+  mealOrder         MealOrder     @relation(fields: [mealOrderId], references: [id])
+  mealOrderId       Int
+  @@id([userOrderId, mealOrderId])
+}
+
+
+model TableOrder {
+  id Int @id @default(autoincrement())
+
+  table Table @relation(fields: [tableId], references: [id])
+  tableId Int
+
+  price Int
+  month String @db.VarChar(255)
+  day String @db.VarChar(255)
+  from String @db.VarChar(255)
+  to String @db.VarChar(255)
+  userOrders TableUserOrder[]
+}
+
+model MealOrder {
+  id Int @id @default(autoincrement())
+
+  meal Meal @relation(fields: [mealId], references: [id])
+  mealId Int
+
+  price Int
+  count Int
+  name String @db.VarChar(255)
+  userOrders MealUserOrder[]
+}
+
+
+
+
+model Table {
+  id Int @id @default(autoincrement())
+  price Int
+  bookings String[]
+  tableOrders TableOrder[]
+}
+
+model Meal {
+  id Int @id @default(autoincrement())
+  price Int 
+  name String @db.VarChar(255) @unique
+  mealOrders MealOrder[]
+}
+
+
+
+
+
+
