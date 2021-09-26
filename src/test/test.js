@@ -10,8 +10,5 @@ afterEach(() => {
 
 
 test("should run the server", async () => {
-    const app = express();
-    app.listen(3000, () => {
-        console.log('Server is runing');
-    })
+    
 });
