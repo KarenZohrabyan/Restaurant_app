@@ -20,7 +20,7 @@ app.use('/api/orders', Order);
 app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify(err));
+    res.send({err: err.message, status: err.status})
 })
 
 app.get('/fillData', async (req, res) => {

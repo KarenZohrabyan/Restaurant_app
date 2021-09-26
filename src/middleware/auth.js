@@ -6,8 +6,8 @@ const {user} = new PrismaClient();
 
 const auth = async (req, res, next) => {
     const code = process.env.code;
-    const token = req.header('Authorization').replace('Bearer ', '');
     try {
+        const token = req.header('Authorization').replace('Bearer ', '');
         const data = jwt.verify(token, code);
         const User = await user.findUnique({
             where: {

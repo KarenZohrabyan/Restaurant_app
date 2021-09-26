@@ -10,7 +10,7 @@ setHours(hours);
 const router = express.Router();
 const client = new PrismaClient();
 
-router.post('/order', auth, async (req, res) => {
+router.post('/order', auth, async (req, res, next) => {
     const orders = req.body;
     const order = await client.userOrder.create({
         data: {
@@ -20,6 +20,7 @@ router.post('/order', auth, async (req, res) => {
     });
 
     let orderPrice = 0;
+  
     orders.tables.forEach(async (item) => {
         const meals = item.meals;
         const tableOrders = await client.tableOrder.findMany({
@@ -55,64 +56,68 @@ router.post('/order', auth, async (req, res) => {
       
         setHours(hours)
         console.log(isFreeTime)
-        if(isFreeTime) {
-            // Table order 
-            Object.assign(tableType.tableOrder.create, item);
-            const searchTable = await client.table.findUnique({
-                where: {
-                    id: tableType.tableOrder.create.tableId
-                }
-            })
-          
-            tableType.tableOrder.create.price = +searchTable.price
-            delete tableType.tableOrder.create.meals;
-            orderPrice += tableType.tableOrder.create.price;
 
-            await client.userOrder.update({
-                where: {
-                    id: order.id
-                },
-                data: {
-                    price: tableType.tableOrder.create.price,
-                    tableOrders: {
-                        create: [tableType]
-                    }
-                }
-            })
-
-            // Meal Order
-            meals.forEach(async (meal) => {
-                const bookedMeal = await client.meal.findUnique({
+        try {
+            if(isFreeTime) {
+                // Table order 
+                Object.assign(tableType.tableOrder.create, item);
+                const searchTable = await client.table.findUnique({
                     where: {
-                        id: meal.mealId
+                        id: tableType.tableOrder.create.tableId
                     }
                 })
-                Object.assign(mealType.mealOrder.create, meal, bookedMeal);
-                delete mealType.mealOrder.create.id
-                orderPrice += ((+bookedMeal.price) * (+mealType.mealOrder.create.count));
+                tableType.tableOrder.create.price = +searchTable.price
+                delete tableType.tableOrder.create.meals;
+                orderPrice += tableType.tableOrder.create.price;
+
                 await client.userOrder.update({
                     where: {
                         id: order.id
                     },
                     data: {
-                        price: orderPrice,
-                        mealOrders: {
-                            create: [mealType]
+                        price: tableType.tableOrder.create.price,
+                        tableOrders: {
+                            create: [tableType]
                         }
                     }
                 })
-            })
+                // Meal Order
+                meals.forEach(async (ml) => {
+                    const bookedMeal = await client.meal.findUnique({
+                        where: {
+                            id: ml.mealId
+                        }
+                    })
+                    Object.assign(mealType.mealOrder.create, ml, bookedMeal);
+                    delete mealType.mealOrder.create.id
+                    orderPrice += ((+bookedMeal.price) * (+mealType.mealOrder.create.count));
+                    await client.userOrder.update({
+                        where: {
+                            id: order.id
+                        },
+                        data: {
+                            price: orderPrice,
+                            mealOrders: {
+                                create: [mealType]
+                            }
+                        }
+                    })
+                })
 
-            orderPrice += item.price;
-            res.status(200).send({msg: `You have successfully booked table`});
-        } else {
-                await client.userOrder.delete({
-                    where: {
-                        id: order.id
-                    }
-                });
-            res.status(400).send(`Table ${item.tableId} is not availabe at that time`);
-            throw new Error(`Table ${item.tableId} is not availabe at that time`)
+                orderPrice += item.price;
+                res.status(200).send({msg: `You have successfully booked table`});
+            } else {
+                    await client.userOrder.delete({
+                        where: {
+                            id: order.id
+                        }
+                    });
+                let Err = new Error(`Table ${item.tableId} is not availabe at that time`);
+                Err.status = 400;
+                throw Err
+            }
+        } catch (error) {
+            next(error)
         }
 
         setHours(hours)
@@ -141,6 +146,11 @@ router.get('/table', auth, async (req, res) => {
     const availabeHours = setTime(hours)
     res.send({Availabe_Hours:availabeHours})
     setHours(hours)
+})
+
+router.get('/tables', auth, async (req, res) => {
+    const tables = await client.table.findMany();
+    res.status(200).send(tables)
 })
 
 module.exports = router;
