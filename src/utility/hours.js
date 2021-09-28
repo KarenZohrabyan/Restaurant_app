@@ -15,12 +15,14 @@ const getFreeHoursOfTable = (tableOrders, hours) => {
             }
         }
     }
+    // console.log(hours)
 }
 
 const setHours = (hours) => {
     for (let i = 1; i < 25; i++) {
         hours[i - 1] = i;
     }
+    // console.log(hours)
 } 
 
 const setTime = (hours) => {

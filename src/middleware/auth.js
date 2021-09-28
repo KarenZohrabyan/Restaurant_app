@@ -20,7 +20,9 @@ const auth = async (req, res, next) => {
         }
         next();
     } catch (error) {
-        res.status(401).send({error: 'Authentication error!', status: 401})
+        let Err = new Error("Authorization error!");
+        Err.status = 401;
+        next(Err);
     }
 }
 
