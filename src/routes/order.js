@@ -5,13 +5,12 @@ const { mealType, tableType } = require("../utility/types");
 const { getFreeHoursOfTable, setHours, setTime } = require("../utility/hours");
 const { ifTableIsAvailable } = require("../controllers/order");
 
-const hours = [];
-setHours(hours);
-
 const router = express.Router();
 const client = new PrismaClient();
 
 router.get("/table", auth, async (req, res) => {
+  const hours = [];
+  setHours(hours);
   const table = req.body;
   const tableOrders = await client.tableOrder.findMany({
     where: {
@@ -102,9 +101,8 @@ router.post("/order", auth, async (req, res, next) => {
       }
     }
     // console.log(orderPrice);
-
     res.setHeader("Content-Type", "application/json");
-    res.status(200).send(orders.tables);
+    res.status(200).send({ msg: `You have successfully booked table` });
   } catch (error) {
     next(error);
   }

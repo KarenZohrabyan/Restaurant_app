@@ -66,4 +66,22 @@ router.use('/login', async (req, res, next) => {
 
 router.post('/login', userController.login);
 
+router.use('/users', async (req, res, next) => {
+    const users = await user.findMany();
+    for(let i = 0; i < users.length; i++) {
+        delete users[i].password;
+        delete users[i].token;
+    }
+    res.locals.users = users;
+    next();
+})
+
+router.get('/users', async (req, res) => {
+    const users = res.locals.users;
+    res.send(users);
+})
+
+router.get('/orders', async (req, res) => {
+    
+})
 module.exports = router;
